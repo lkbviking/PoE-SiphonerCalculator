@@ -23,6 +23,65 @@
         </div>
 
         <form id="build-form" class="input-stack">
+          <section class="input-section" aria-labelledby="self-hit-title">
+            <div class="input-section__header">
+              <h3 id="self-hit-title">Self-Hit Setup</h3>
+              <p>Define how many minions die and how much Heartbound damage each death deals.</p>
+            </div>
+
+            <div class="input-grid input-grid--two">
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Summon Skeletons gem level</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Used to derive the default minion count from the Summon Skeletons gem">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Used to derive the default minion count from the Summon Skeletons gem</span>
+                  </span>
+                </span>
+                <input id="skeleton-gem-level" name="skeleton-gem-level" type="number" value="21" min="1" max="40" step="1">
+              </label>
+
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Heartbound damage per minion</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enter the exact physical self-hit from one minion death">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enter the exact physical self-hit from one minion death</span>
+                  </span>
+                </span>
+                <input id="heartbound-damage" name="heartbound-damage" type="number" value="350" min="0" max="5000" step="1">
+              </label>
+            </div>
+
+            <div class="derived-pill" aria-live="polite">
+              Summon Skeletons gem level currently implies <strong id="derived-skeleton-count">4</strong> minions per cast.
+            </div>
+
+            <label class="field field--toggle" for="skeleton-override-enabled">
+              <span>
+                <span class="field__meta">
+                  <span class="field__label">Use manual minion override</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enable only if your actual final hit uses a different minion count">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enable only if your actual final hit uses a different minion count</span>
+                  </span>
+                </span>
+              </span>
+              <input id="skeleton-override-enabled" name="skeleton-override-enabled" type="checkbox">
+            </label>
+
+            <label class="field field--disabled" id="skeleton-override-field" hidden>
+              <span class="field__meta">
+                <span class="field__label">Manual minion count</span>
+                <span class="field__tooltip" tabindex="0" aria-label="Overrides the gem-derived minion count when enabled">
+                  <span class="field__tooltip-icon">?</span>
+                  <span class="field__tooltip-text" role="tooltip">Overrides the gem-derived minion count when enabled</span>
+                </span>
+              </span>
+              <input id="skeleton-override" name="skeleton-override" type="number" value="4" min="0" max="20" step="1" disabled>
+            </label>
+          </section>
+
           <section class="input-section" aria-labelledby="character-title">
             <div class="input-section__header">
               <h3 id="character-title">Character</h3>
@@ -50,96 +109,6 @@
                   </span>
                 </span>
                 <input id="armour-value" name="armour-value" type="number" value="2973" min="0" max="500000" step="1">
-              </label>
-            </div>
-          </section>
-
-          <section class="input-section" aria-labelledby="self-hit-title">
-            <div class="input-section__header">
-              <h3 id="self-hit-title">Self-Hit Setup</h3>
-              <p>Define how many skeletons die and how much Heartbound damage each death deals.</p>
-            </div>
-
-            <div class="input-grid input-grid--two">
-              <label class="field">
-                <span class="field__meta">
-                  <span class="field__label">Summon Skeletons gem level</span>
-                  <span class="field__tooltip" tabindex="0" aria-label="Used to derive skeletons summoned per cast by default">
-                    <span class="field__tooltip-icon">?</span>
-                    <span class="field__tooltip-text" role="tooltip">Used to derive skeletons summoned per cast by default</span>
-                  </span>
-                </span>
-                <input id="skeleton-gem-level" name="skeleton-gem-level" type="number" value="21" min="1" max="40" step="1">
-              </label>
-
-              <label class="field">
-                <span class="field__meta">
-                  <span class="field__label">Heartbound damage per skeleton</span>
-                  <span class="field__tooltip" tabindex="0" aria-label="Enter the exact physical self-hit from one skeleton death">
-                    <span class="field__tooltip-icon">?</span>
-                    <span class="field__tooltip-text" role="tooltip">Enter the exact physical self-hit from one skeleton death</span>
-                  </span>
-                </span>
-                <input id="heartbound-damage" name="heartbound-damage" type="number" value="495" min="0" max="5000" step="1">
-              </label>
-            </div>
-
-            <div class="derived-pill" aria-live="polite">
-              Gem level currently implies <strong id="derived-skeleton-count">4</strong> skeletons per cast.
-            </div>
-
-            <label class="field field--toggle" for="skeleton-override-enabled">
-              <span>
-                <span class="field__meta">
-                  <span class="field__label">Use manual skeleton override</span>
-                  <span class="field__tooltip" tabindex="0" aria-label="Enable only if your actual final hit uses a different skeleton count">
-                    <span class="field__tooltip-icon">?</span>
-                    <span class="field__tooltip-text" role="tooltip">Enable only if your actual final hit uses a different skeleton count</span>
-                  </span>
-                </span>
-              </span>
-              <input id="skeleton-override-enabled" name="skeleton-override-enabled" type="checkbox">
-            </label>
-
-            <label class="field field--disabled" id="skeleton-override-field">
-              <span class="field__meta">
-                <span class="field__label">Manual skeleton count</span>
-                <span class="field__tooltip" tabindex="0" aria-label="Overrides the gem-derived value when enabled">
-                  <span class="field__tooltip-icon">?</span>
-                  <span class="field__tooltip-text" role="tooltip">Overrides the gem-derived value when enabled</span>
-                </span>
-              </span>
-              <input id="skeleton-override" name="skeleton-override" type="number" value="4" min="0" max="20" step="1" disabled>
-            </label>
-          </section>
-
-          <section class="input-section" aria-labelledby="mitigation-title">
-            <div class="input-section__header">
-              <h3 id="mitigation-title">Mitigation</h3>
-              <p>Additional physical damage reduction is added to armour-based reduction and capped at 90% total.</p>
-            </div>
-
-            <div class="input-grid input-grid--two">
-              <label class="field">
-                <span class="field__meta">
-                  <span class="field__label">Physical damage reduction</span>
-                  <span class="field__tooltip" tabindex="0" aria-label="Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.">
-                    <span class="field__tooltip-icon">?</span>
-                    <span class="field__tooltip-text" role="tooltip">Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.</span>
-                  </span>
-                </span>
-                <input id="chest-reduction" name="chest-reduction" type="number" value="0" min="0" max="90" step="1">
-              </label>
-
-              <label class="field">
-                <span class="field__meta">
-                  <span class="field__label">Endurance charges</span>
-                  <span class="field__tooltip" tabindex="0" aria-label="Each charge adds 4% additional physical damage reduction">
-                    <span class="field__tooltip-icon">?</span>
-                    <span class="field__tooltip-text" role="tooltip">Each charge adds 4% additional physical damage reduction</span>
-                  </span>
-                </span>
-                <input id="endurance-charges" name="endurance-charges" type="number" value="0" min="0" max="12" step="1">
               </label>
             </div>
           </section>
@@ -191,6 +160,37 @@
               </label>
             </div>
           </section>
+
+          <section class="input-section" aria-labelledby="mitigation-title">
+            <div class="input-section__header">
+              <h3 id="mitigation-title">Mitigation</h3>
+              <p>Additional physical damage reduction is added to armour-based reduction and capped at 90% total.</p>
+            </div>
+
+            <div class="input-grid input-grid--two">
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Physical damage reduction</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.</span>
+                  </span>
+                </span>
+                <input id="chest-reduction" name="chest-reduction" type="number" value="0" min="0" max="90" step="1">
+              </label>
+
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Endurance charges</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Each charge adds 4% additional physical damage reduction">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Each charge adds 4% additional physical damage reduction</span>
+                  </span>
+                </span>
+                <input id="endurance-charges" name="endurance-charges" type="number" value="0" min="0" max="12" step="1">
+              </label>
+            </div>
+          </section>
         </form>
 
         <aside class="assumption-note">
@@ -213,9 +213,15 @@
           <p id="status-message" class="status-card__message">The final unwarded Heartbound hit leaves enough life to survive the siphoner break.</p>
         </div>
 
+        <section id="progenesis-warning" class="warning-card" aria-live="polite" hidden>
+          <p class="warning-card__kicker">Warning</p>
+          <h3 class="warning-card__title">Progenesis is required for this survival result.</h3>
+          <p id="progenesis-warning-text" class="warning-card__message">Progenesis is the only reason this setup survives this hit.</p>
+        </section>
+
         <div class="summary-grid" aria-label="Computed survivability values">
           <article class="summary-tile">
-            <span class="summary-tile__label">Total incoming damage</span>
+            <span class="summary-tile__label">Total pre-mitigation damage</span>
             <strong id="raw-hit-value">1,400</strong>
           </article>
           <article class="summary-tile">

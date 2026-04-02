@@ -13,8 +13,8 @@ This repository contains a Path of Exile ward-loop calculator focused on one que
 
 - Life pool
 - Armour
-- Summon Skeletons gem level, with an optional manual skeleton-count override
-- Heartbound damage taken per skeleton death
+- Summon Skeletons gem level, with an optional manual minion-count override
+- Heartbound damage taken per minion death
 - General additional physical damage reduction
 - Endurance charges at 4% additional physical damage reduction each
 - Optional Ascendant Berserker toggle, enabled by default, for 5% increased damage taken
@@ -22,16 +22,16 @@ This repository contains a Path of Exile ward-loop calculator focused on one que
 
 ## Formula summary
 
-1. Skeleton count is derived from Summon Skeletons gem level by breakpoint:
-	- Levels 1-10 summon 2 skeletons.
-	- Levels 11-20 summon 3 skeletons.
-	- Levels 21-30 summon 4 skeletons.
-	- Levels 31+ summon 5 skeletons.
-2. Total incoming Heartbound damage = skeleton count multiplied by Heartbound damage per skeleton.
+1. Minion count is derived from Summon Skeletons gem level by breakpoint:
+	- Levels 1-10 summon 2 minions.
+	- Levels 11-20 summon 3 minions.
+	- Levels 21-30 summon 4 minions.
+	- Levels 31+ summon 5 minions.
+2. Total pre-mitigation Heartbound damage = minion count multiplied by Heartbound damage per minion.
 3. Armour reduction is calculated against one Heartbound hit, not the summed total damage: `armour / (armour + 5 * damagePerHit)`.
 4. Additional physical damage reduction = general physical damage reduction percent + `4% * endurance charges`.
 5. Each Heartbound hit uses total reduction of `min(90%, armourReductionPerHit + additionalReduction)`.
-6. Total post-mitigation damage = mitigated damage per hit multiplied by the number of skeleton deaths.
+6. Total post-mitigation damage = mitigated damage per hit multiplied by the number of minion deaths.
 7. Optional Ascendant Berserker applies 5% increased damage taken to that post-mitigation total and is enabled by default.
 8. Optional Mind Over Matter treats 40% of the resulting total as mana loss instead of life loss.
 9. Optional Progenesis treats 25% of the remaining life loss as delayed instead of immediate.

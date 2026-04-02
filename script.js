@@ -21,6 +21,8 @@ const outputs = {
   verdictLabel: document.getElementById("verdict-label"),
   verdictValue: document.getElementById("verdict-value"),
   statusMessage: document.getElementById("status-message"),
+  progenesisWarning: document.getElementById("progenesis-warning"),
+  progenesisWarningText: document.getElementById("progenesis-warning-text"),
   rawHitValue: document.getElementById("raw-hit-value"),
   summaryDamagePerMinionValue: document.getElementById("summary-damage-per-minion-value"),
   skeletonCountUsed: document.getElementById("skeleton-count-used"),
@@ -117,9 +119,11 @@ function calculateResult() {
   const lifePortion = inputs.mindOverMatter.checked ? damageBeforeSplit * 0.6 : damageBeforeSplit;
   const delayedLoss = inputs.progenesis.checked ? lifePortion * 0.25 : 0;
   const immediateLifeLoss = inputs.progenesis.checked ? lifePortion * 0.75 : lifePortion;
+  const lifeAfterHitWithoutProgenesis = lifePool - lifePortion;
   const lifeAfterHit = lifePool - immediateLifeLoss;
   const shiftedLoss = manaLoss + delayedLoss;
   const survives = lifeAfterHit > 0;
+  const progenesisSaves = inputs.progenesis.checked && survives && lifeAfterHitWithoutProgenesis <= 0;
 
   return {
     derivedSkeletonCount,
@@ -137,8 +141,10 @@ function calculateResult() {
     manaLoss,
     delayedLoss,
     immediateLifeLoss,
+    lifeAfterHitWithoutProgenesis,
     lifeAfterHit,
     shiftedLoss,
+    progenesisSaves,
     survives,
   };
 }
@@ -147,6 +153,7 @@ function renderResult() {
   const result = calculateResult();
 
   outputs.derivedSkeletonCount.textContent = String(result.derivedSkeletonCount);
+  outputs.overrideField.hidden = !inputs.overrideEnabled.checked;
   inputs.overrideValue.disabled = !inputs.overrideEnabled.checked;
   outputs.overrideField.classList.toggle("field--disabled", !inputs.overrideEnabled.checked);
 
@@ -164,6 +171,7 @@ function renderResult() {
   outputs.manaLossValue.textContent = formatNumber(result.manaLoss);
   outputs.delayedLossValue.textContent = formatNumber(result.delayedLoss);
   outputs.lifeAfterHitValue.textContent = formatNumber(Math.max(result.lifeAfterHit, 0));
+  outputs.progenesisWarning.hidden = !result.progenesisSaves;
 
   toggleBreakdownRow(outputs.breakdownRows.armourReduction, result.armourReduction > 0);
   toggleBreakdownRow(outputs.breakdownRows.extraReduction, result.additionalReduction > 0);
@@ -176,6 +184,10 @@ function renderResult() {
     : "";
 
   outputs.formulaLine.textContent = `${formatNumber(result.skeletonCount, 0)} hits of ${formatNumber(result.hitDamage)} -> ${formatNumber(result.skeletonCount, 0)} hits of ${formatNumber(result.mitigatedDamagePerHit)}${berserkerStep} -> immediate life loss ${formatNumber(result.immediateLifeLoss)}.`;
+
+  if (result.progenesisSaves) {
+    outputs.progenesisWarningText.textContent = `Progenesis is the only reason this setup survives the break. It must actually be active when the hit happens, which in practice means you will need effectively 100% uptime on it. You will then take ${formatNumber(result.delayedLoss)} delayed life loss over 4 seconds, so without at least 33% life recoup you are still net losing life during that window and may die afterward.`;
+  }
 
   if (result.survives) {
     outputs.statusPill.textContent = "Survives";
