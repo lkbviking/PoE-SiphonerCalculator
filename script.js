@@ -1,50 +1,195 @@
 const form = document.getElementById("build-form");
-const primaryInput = document.getElementById("primary-value");
-const supportInput = document.getElementById("support-value");
-const thresholdInput = document.getElementById("required-threshold");
-const safetyInput = document.getElementById("safety-check");
 
-const statusCard = document.getElementById("status-card");
-const scoreValue = document.getElementById("score-value");
-const thresholdValue = document.getElementById("threshold-value");
-const bufferValue = document.getElementById("buffer-value");
-const safetyValue = document.getElementById("safety-value");
-const statusMessage = document.getElementById("status-message");
+const inputs = {
+  lifePool: document.getElementById("life-pool"),
+  armourValue: document.getElementById("armour-value"),
+  gemLevel: document.getElementById("skeleton-gem-level"),
+  heartboundDamage: document.getElementById("heartbound-damage"),
+  overrideEnabled: document.getElementById("skeleton-override-enabled"),
+  overrideValue: document.getElementById("skeleton-override"),
+  chestReduction: document.getElementById("chest-reduction"),
+  enduranceCharges: document.getElementById("endurance-charges"),
+  ascendantBerserker: document.getElementById("ascendant-berserker"),
+  mindOverMatter: document.getElementById("mind-over-matter"),
+  progenesis: document.getElementById("progenesis-enabled"),
+};
 
-function calculateScore() {
-  const primary = Number(primaryInput.value) || 0;
-  const support = Number(supportInput.value) || 0;
-  const threshold = Number(thresholdInput.value) || 0;
-  const safetyPenalty = safetyInput.checked ? 10 : 0;
+const outputs = {
+  derivedSkeletonCount: document.getElementById("derived-skeleton-count"),
+  statusCard: document.getElementById("status-card"),
+  statusPill: document.getElementById("status-pill"),
+  verdictLabel: document.getElementById("verdict-label"),
+  verdictValue: document.getElementById("verdict-value"),
+  statusMessage: document.getElementById("status-message"),
+  rawHitValue: document.getElementById("raw-hit-value"),
+  summaryDamagePerMinionValue: document.getElementById("summary-damage-per-minion-value"),
+  skeletonCountUsed: document.getElementById("skeleton-count-used"),
+  damagePerMinionValue: document.getElementById("damage-per-minion-value"),
+  armourReductionValue: document.getElementById("armour-reduction-value"),
+  extraReductionValue: document.getElementById("extra-reduction-value"),
+  damageTakenModifierValue: document.getElementById("damage-taken-modifier-value"),
+  mitigatedHitValue: document.getElementById("mitigated-hit-value"),
+  manaLossValue: document.getElementById("mana-loss-value"),
+  delayedLossValue: document.getElementById("delayed-loss-value"),
+  lifeAfterHitValue: document.getElementById("life-after-hit-value"),
+  formulaLine: document.getElementById("formula-line"),
+  overrideField: document.getElementById("skeleton-override-field"),
+  breakdownRows: {
+    armourReduction: document.getElementById("armour-reduction-row"),
+    extraReduction: document.getElementById("extra-reduction-row"),
+    damageTakenModifier: document.getElementById("damage-taken-modifier-row"),
+    manaLoss: document.getElementById("mana-loss-row"),
+    delayedLoss: document.getElementById("delayed-loss-row"),
+  },
+};
 
-  const score = primary + support - safetyPenalty;
-  const buffer = score - threshold;
-  const passes = buffer >= 0;
+function clampNumber(value, min, max) {
+  const parsed = Number(value);
 
-  return { score, threshold, buffer, passes };
+  if (!Number.isFinite(parsed)) {
+    return min;
+  }
+
+  return Math.min(Math.max(parsed, min), max);
 }
 
-function renderStatus() {
-  const { score, threshold, buffer, passes } = calculateScore();
+function clampInteger(value, min, max) {
+  return Math.round(clampNumber(value, min, max));
+}
 
-  scoreValue.textContent = String(score);
-  thresholdValue.textContent = String(threshold);
-  bufferValue.textContent = `${buffer >= 0 ? "+" : ""}${buffer}`;
-  safetyValue.textContent = safetyInput.checked ? "On" : "Off";
+function formatNumber(value, maximumFractionDigits = 1) {
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits,
+    minimumFractionDigits: Number.isInteger(value) ? 0 : Math.min(1, maximumFractionDigits),
+  }).format(value);
+}
 
-  statusCard.classList.toggle("status-card--pass", passes);
-  statusCard.classList.toggle("status-card--fail", !passes);
+function formatPercent(decimalValue) {
+  return `${formatNumber(decimalValue * 100, 1)}%`;
+}
 
-  const pill = statusCard.querySelector(".status-card__pill");
+function roundReductionToWholePercent(decimalValue) {
+  return Math.round(decimalValue * 100) / 100;
+}
 
-  if (passes) {
-    pill.textContent = "Build Works";
-    statusMessage.textContent = "Your placeholder build score clears the current threshold.";
+function toggleBreakdownRow(element, shouldShow) {
+  element.hidden = !shouldShow;
+}
+
+function deriveSkeletonCount(gemLevel) {
+  if (gemLevel >= 31) {
+    return 5;
+  }
+
+  if (gemLevel >= 21) {
+    return 4;
+  }
+
+  if (gemLevel >= 11) {
+    return 3;
+  }
+
+  return 2;
+}
+
+function calculateResult() {
+  const lifePool = clampNumber(inputs.lifePool.value, 0, 50000);
+  const armourValue = clampNumber(inputs.armourValue.value, 0, 500000);
+  const gemLevel = clampInteger(inputs.gemLevel.value, 1, 40);
+  const derivedSkeletonCount = deriveSkeletonCount(gemLevel);
+  const manualOverrideEnabled = inputs.overrideEnabled.checked;
+  const overrideSkeletonCount = clampInteger(inputs.overrideValue.value, 0, 20);
+  const skeletonCount = manualOverrideEnabled ? overrideSkeletonCount : derivedSkeletonCount;
+  const heartboundDamage = clampNumber(inputs.heartboundDamage.value, 0, 5000);
+  const chestReductionPercent = clampNumber(inputs.chestReduction.value, 0, 90);
+  const enduranceCharges = clampInteger(inputs.enduranceCharges.value, 0, 12);
+  const additionalReduction = Math.min(0.9, (chestReductionPercent + enduranceCharges * 4) / 100);
+  const totalIncomingDamage = skeletonCount * heartboundDamage;
+  const rawArmourReduction = heartboundDamage > 0 ? armourValue / (armourValue + 5 * heartboundDamage) : 0;
+  const armourReduction = roundReductionToWholePercent(rawArmourReduction);
+  const totalReduction = Math.min(0.9, armourReduction + additionalReduction);
+  const mitigatedDamagePerHit = heartboundDamage * (1 - totalReduction);
+  const mitigatedHit = mitigatedDamagePerHit * skeletonCount;
+  const damageTakenMultiplier = inputs.ascendantBerserker.checked ? 1.05 : 1;
+  const damageTakenPerMinionDeath = mitigatedDamagePerHit * damageTakenMultiplier;
+  const damageBeforeSplit = mitigatedHit * damageTakenMultiplier;
+  const manaLoss = inputs.mindOverMatter.checked ? damageBeforeSplit * 0.4 : 0;
+  const lifePortion = inputs.mindOverMatter.checked ? damageBeforeSplit * 0.6 : damageBeforeSplit;
+  const delayedLoss = inputs.progenesis.checked ? lifePortion * 0.25 : 0;
+  const immediateLifeLoss = inputs.progenesis.checked ? lifePortion * 0.75 : lifePortion;
+  const lifeAfterHit = lifePool - immediateLifeLoss;
+  const shiftedLoss = manaLoss + delayedLoss;
+  const survives = lifeAfterHit > 0;
+
+  return {
+    derivedSkeletonCount,
+    skeletonCount,
+    totalIncomingDamage,
+    hitDamage: heartboundDamage,
+    armourReduction,
+    additionalReduction,
+    totalReduction,
+    mitigatedDamagePerHit,
+    mitigatedHit,
+    damageTakenMultiplier,
+    damageTakenPerMinionDeath,
+    damageBeforeSplit,
+    manaLoss,
+    delayedLoss,
+    immediateLifeLoss,
+    lifeAfterHit,
+    shiftedLoss,
+    survives,
+  };
+}
+
+function renderResult() {
+  const result = calculateResult();
+
+  outputs.derivedSkeletonCount.textContent = String(result.derivedSkeletonCount);
+  inputs.overrideValue.disabled = !inputs.overrideEnabled.checked;
+  outputs.overrideField.classList.toggle("field--disabled", !inputs.overrideEnabled.checked);
+
+  outputs.statusCard.classList.toggle("status-card--pass", result.survives);
+  outputs.statusCard.classList.toggle("status-card--fail", !result.survives);
+
+  outputs.rawHitValue.textContent = formatNumber(result.totalIncomingDamage);
+  outputs.skeletonCountUsed.textContent = formatNumber(result.skeletonCount, 0);
+  outputs.summaryDamagePerMinionValue.textContent = formatNumber(result.damageTakenPerMinionDeath);
+  outputs.damagePerMinionValue.textContent = formatNumber(result.damageTakenPerMinionDeath);
+  outputs.armourReductionValue.textContent = formatPercent(result.armourReduction);
+  outputs.extraReductionValue.textContent = formatPercent(result.additionalReduction);
+  outputs.damageTakenModifierValue.textContent = formatPercent(result.damageTakenMultiplier - 1);
+  outputs.mitigatedHitValue.textContent = formatNumber(result.damageBeforeSplit);
+  outputs.manaLossValue.textContent = formatNumber(result.manaLoss);
+  outputs.delayedLossValue.textContent = formatNumber(result.delayedLoss);
+  outputs.lifeAfterHitValue.textContent = formatNumber(Math.max(result.lifeAfterHit, 0));
+
+  toggleBreakdownRow(outputs.breakdownRows.armourReduction, result.armourReduction > 0);
+  toggleBreakdownRow(outputs.breakdownRows.extraReduction, result.additionalReduction > 0);
+  toggleBreakdownRow(outputs.breakdownRows.damageTakenModifier, result.damageTakenMultiplier > 1);
+  toggleBreakdownRow(outputs.breakdownRows.manaLoss, result.manaLoss > 0);
+  toggleBreakdownRow(outputs.breakdownRows.delayedLoss, result.delayedLoss > 0);
+
+  const berserkerStep = result.damageTakenMultiplier > 1
+    ? ` -> Ascendant Berserker ${formatPercent(result.damageTakenMultiplier - 1)} increased taken = ${formatNumber(result.damageBeforeSplit)}`
+    : "";
+
+  outputs.formulaLine.textContent = `${formatNumber(result.skeletonCount, 0)} hits of ${formatNumber(result.hitDamage)} -> ${formatNumber(result.skeletonCount, 0)} hits of ${formatNumber(result.mitigatedDamagePerHit)}${berserkerStep} -> immediate life loss ${formatNumber(result.immediateLifeLoss)}.`;
+
+  if (result.survives) {
+    outputs.statusPill.textContent = "Survives";
+    outputs.verdictLabel.textContent = "Immediate life remaining";
+    outputs.verdictValue.textContent = formatNumber(result.lifeAfterHit);
+    outputs.statusMessage.textContent = `The final unwarded Heartbound hit leaves ${formatNumber(result.lifeAfterHit)} life, so this character survives the siphoner break.`;
   } else {
-    pill.textContent = "Build Fails";
-    statusMessage.textContent = "The placeholder build score is below the current threshold, so this setup needs more room.";
+    outputs.statusPill.textContent = "Dies";
+    outputs.verdictLabel.textContent = "Life shortfall";
+    outputs.verdictValue.textContent = formatNumber(Math.abs(result.lifeAfterHit));
+    outputs.statusMessage.textContent = `The final unwarded Heartbound hit exceeds your life pool by ${formatNumber(Math.abs(result.lifeAfterHit))}, so this setup dies on encountering a siphoner.`;
   }
 }
 
-form.addEventListener("input", renderStatus);
-renderStatus();
+form.addEventListener("input", renderResult);
+form.addEventListener("change", renderResult);
+renderResult();

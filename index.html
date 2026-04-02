@@ -3,80 +3,275 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A Path of Exile build checker shell for GitHub Pages.">
-  <title>PoE Build Checker</title>
+  <meta name="description" content="A Path of Exile ward-loop calculator for checking whether the final Heartbound self-hit after a siphoner break is lethal.">
+  <title>PoE Siphoner Survival Calculator</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="page-shell">
     <header class="hero">
-      <p class="hero__eyebrow">Path of Exile Build Check</p>
-      <h1>PoE Build Requirement Checker</h1>
-      <p class="hero__subtitle">A dark-mode shell for testing whether a build meets a target requirement.</p>
+      <p class="hero__eyebrow">Path of Exile 1 - Ward Loop</p>
+      <h1>Siphoner Break Survival Calculator</h1>
+      <p class="hero__subtitle">Check whether the final Heartbound Loop self-hit that lands after ward is gone kills your character or leaves enough life to escape and restart.</p>
     </header>
 
     <main class="dashboard" aria-label="Build calculator layout">
       <section class="panel panel--inputs" aria-labelledby="build-inputs-title">
         <div class="panel__header">
           <p class="panel__kicker">Inputs</p>
-          <h2 id="build-inputs-title">Build Parameters</h2>
+          <h2 id="build-inputs-title">Ward-Loop Setup</h2>
         </div>
 
-        <form id="build-form" class="input-grid">
-          <label class="field">
-            <span class="field__label">Primary value</span>
-            <input id="primary-value" name="primary-value" type="number" value="85" min="0" max="200">
-          </label>
+        <form id="build-form" class="input-stack">
+          <section class="input-section" aria-labelledby="character-title">
+            <div class="input-section__header">
+              <h3 id="character-title">Character</h3>
+              <p>Life and armour that still apply once the loop is broken.</p>
+            </div>
 
-          <label class="field">
-            <span class="field__label">Support value</span>
-            <input id="support-value" name="support-value" type="number" value="25" min="0" max="200">
-          </label>
+            <div class="input-grid input-grid--two">
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Life pool</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Immediate life available to survive the final hit">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Immediate life available to survive the final hit</span>
+                  </span>
+                </span>
+                <input id="life-pool" name="life-pool" type="number" value="815" min="0" max="50000" step="1">
+              </label>
 
-          <label class="field">
-            <span class="field__label">Required threshold</span>
-            <input id="required-threshold" name="required-threshold" type="number" value="100" min="1" max="400">
-          </label>
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Armour</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Used in the PoE physical hit mitigation formula">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Used in the PoE physical hit mitigation formula</span>
+                  </span>
+                </span>
+                <input id="armour-value" name="armour-value" type="number" value="2973" min="0" max="500000" step="1">
+              </label>
+            </div>
+          </section>
 
-          <label class="field field--toggle" for="safety-check">
-            <span>
-              <span class="field__label">Enable safety check</span>
-              <span class="field__hint">Placeholder rule for the first hosted version</span>
-            </span>
-            <input id="safety-check" name="safety-check" type="checkbox" checked>
-          </label>
+          <section class="input-section" aria-labelledby="self-hit-title">
+            <div class="input-section__header">
+              <h3 id="self-hit-title">Self-Hit Setup</h3>
+              <p>Define how many skeletons die and how much Heartbound damage each death deals.</p>
+            </div>
+
+            <div class="input-grid input-grid--two">
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Summon Skeletons gem level</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Used to derive skeletons summoned per cast by default">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Used to derive skeletons summoned per cast by default</span>
+                  </span>
+                </span>
+                <input id="skeleton-gem-level" name="skeleton-gem-level" type="number" value="21" min="1" max="40" step="1">
+              </label>
+
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Heartbound damage per skeleton</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enter the exact physical self-hit from one skeleton death">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enter the exact physical self-hit from one skeleton death</span>
+                  </span>
+                </span>
+                <input id="heartbound-damage" name="heartbound-damage" type="number" value="495" min="0" max="5000" step="1">
+              </label>
+            </div>
+
+            <div class="derived-pill" aria-live="polite">
+              Gem level currently implies <strong id="derived-skeleton-count">4</strong> skeletons per cast.
+            </div>
+
+            <label class="field field--toggle" for="skeleton-override-enabled">
+              <span>
+                <span class="field__meta">
+                  <span class="field__label">Use manual skeleton override</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enable only if your actual final hit uses a different skeleton count">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enable only if your actual final hit uses a different skeleton count</span>
+                  </span>
+                </span>
+              </span>
+              <input id="skeleton-override-enabled" name="skeleton-override-enabled" type="checkbox">
+            </label>
+
+            <label class="field field--disabled" id="skeleton-override-field">
+              <span class="field__meta">
+                <span class="field__label">Manual skeleton count</span>
+                <span class="field__tooltip" tabindex="0" aria-label="Overrides the gem-derived value when enabled">
+                  <span class="field__tooltip-icon">?</span>
+                  <span class="field__tooltip-text" role="tooltip">Overrides the gem-derived value when enabled</span>
+                </span>
+              </span>
+              <input id="skeleton-override" name="skeleton-override" type="number" value="4" min="0" max="20" step="1" disabled>
+            </label>
+          </section>
+
+          <section class="input-section" aria-labelledby="mitigation-title">
+            <div class="input-section__header">
+              <h3 id="mitigation-title">Mitigation</h3>
+              <p>Additional physical damage reduction is added to armour-based reduction and capped at 90% total.</p>
+            </div>
+
+            <div class="input-grid input-grid--two">
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Physical damage reduction</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Enter your general additional physical damage reduction percent. This is commonly found on body armour and some minor pantheon gods.</span>
+                  </span>
+                </span>
+                <input id="chest-reduction" name="chest-reduction" type="number" value="0" min="0" max="90" step="1">
+              </label>
+
+              <label class="field">
+                <span class="field__meta">
+                  <span class="field__label">Endurance charges</span>
+                  <span class="field__tooltip" tabindex="0" aria-label="Each charge adds 4% additional physical damage reduction">
+                    <span class="field__tooltip-icon">?</span>
+                    <span class="field__tooltip-text" role="tooltip">Each charge adds 4% additional physical damage reduction</span>
+                  </span>
+                </span>
+                <input id="endurance-charges" name="endurance-charges" type="number" value="0" min="0" max="12" step="1">
+              </label>
+            </div>
+          </section>
+
+          <section class="input-section" aria-labelledby="options-title">
+            <div class="input-section__header">
+              <h3 id="options-title">Optional Modifiers</h3>
+              <p>Toggle whichever modifiers apply. Ascendant Berserker is enabled by default because it increases the damage you take before life-loss splitting effects.</p>
+            </div>
+
+            <div class="toggle-list">
+              <label class="field field--toggle" for="ascendant-berserker">
+                <span>
+                  <span class="field__meta">
+                    <span class="field__label">Ascendant Berserker</span>
+                    <span class="field__tooltip" tabindex="0" aria-label="Apply 5% increased damage taken from the Ascendant Berserker ascendancy point">
+                      <span class="field__tooltip-icon">?</span>
+                      <span class="field__tooltip-text" role="tooltip">Apply 5% increased damage taken from the Ascendant Berserker ascendancy point</span>
+                    </span>
+                  </span>
+                </span>
+                <input id="ascendant-berserker" name="ascendant-berserker" type="checkbox" checked>
+              </label>
+
+              <label class="field field--toggle" for="mind-over-matter">
+                <span>
+                  <span class="field__meta">
+                    <span class="field__label">Mind Over Matter</span>
+                    <span class="field__tooltip" tabindex="0" aria-label="Treat 40% of the post-mitigation hit as mana loss instead of life loss">
+                      <span class="field__tooltip-icon">?</span>
+                      <span class="field__tooltip-text" role="tooltip">Treat 40% of the post-mitigation hit as mana loss instead of life loss</span>
+                    </span>
+                  </span>
+                </span>
+                <input id="mind-over-matter" name="mind-over-matter" type="checkbox">
+              </label>
+
+              <label class="field field--toggle" for="progenesis-enabled">
+                <span>
+                  <span class="field__meta">
+                    <span class="field__label">Progenesis</span>
+                    <span class="field__tooltip" tabindex="0" aria-label="Treat 25% of life loss as delayed loss instead of immediate life loss">
+                      <span class="field__tooltip-icon">?</span>
+                      <span class="field__tooltip-text" role="tooltip">Treat 25% of life loss as delayed loss instead of immediate life loss</span>
+                    </span>
+                  </span>
+                </span>
+                <input id="progenesis-enabled" name="progenesis-enabled" type="checkbox">
+              </label>
+            </div>
+          </section>
         </form>
+
+        <aside class="assumption-note">
+          This calculator intentionally ignores ward because it is checking the last Heartbound hit after siphoner breaks the loop and ward no longer catches the hit.
+        </aside>
       </section>
 
       <section class="panel panel--result" aria-labelledby="result-title">
         <div class="panel__header">
           <p class="panel__kicker">Result</p>
-          <h2 id="result-title">Requirement Status</h2>
+          <h2 id="result-title">Immediate Survival Verdict</h2>
         </div>
 
         <div id="status-card" class="status-card status-card--pass" role="status" aria-live="polite">
-          <div class="status-card__pill">Build Works</div>
+          <div id="status-pill" class="status-card__pill">Survives</div>
           <div class="status-card__score-row">
-            <span class="status-card__score-label">Current score</span>
-            <span id="score-value" class="status-card__score-value">110</span>
+            <span id="verdict-label" class="status-card__score-label">Immediate life remaining</span>
+            <span id="verdict-value" class="status-card__score-value">2,776.4</span>
           </div>
-          <p id="status-message" class="status-card__message">Your placeholder build score clears the current threshold.</p>
+          <p id="status-message" class="status-card__message">The final unwarded Heartbound hit leaves enough life to survive the siphoner break.</p>
         </div>
 
-        <div class="summary-grid" aria-label="Computed preview values">
+        <div class="summary-grid" aria-label="Computed survivability values">
           <article class="summary-tile">
-            <span class="summary-tile__label">Threshold</span>
-            <strong id="threshold-value">100</strong>
+            <span class="summary-tile__label">Total incoming damage</span>
+            <strong id="raw-hit-value">1,400</strong>
           </article>
           <article class="summary-tile">
-            <span class="summary-tile__label">Buffer</span>
-            <strong id="buffer-value">+10</strong>
-          </article>
-          <article class="summary-tile">
-            <span class="summary-tile__label">Safety mode</span>
-            <strong id="safety-value">On</strong>
+            <span class="summary-tile__label">Damage taken per minion death</span>
+            <strong id="summary-damage-per-minion-value">233.9</strong>
           </article>
         </div>
+
+        <section class="breakdown-card" aria-labelledby="breakdown-title">
+          <div class="breakdown-card__header">
+            <div>
+              <p class="panel__kicker">Breakdown</p>
+              <h3 id="breakdown-title">Hit Breakdown</h3>
+            </div>
+            <p id="formula-line" class="formula-line">4 hits of 350 -> 4 hits of 180.9 -> immediate life loss 723.6.</p>
+          </div>
+
+          <dl class="breakdown-list">
+            <div class="breakdown-list__row" id="minion-count-row">
+              <dt>Minion deaths counted</dt>
+              <dd id="skeleton-count-used">4</dd>
+            </div>
+            <div class="breakdown-list__row" id="damage-per-minion-row">
+              <dt>Damage taken per minion death</dt>
+              <dd id="damage-per-minion-value">180.9</dd>
+            </div>
+            <div class="breakdown-list__row" id="armour-reduction-row">
+              <dt>Armour reduction per hit</dt>
+              <dd id="armour-reduction-value">26.3%</dd>
+            </div>
+            <div class="breakdown-list__row" id="extra-reduction-row">
+              <dt>Additional physical reduction</dt>
+              <dd id="extra-reduction-value">22.0%</dd>
+            </div>
+            <div class="breakdown-list__row" id="damage-taken-modifier-row">
+              <dt>Increased damage taken</dt>
+              <dd id="damage-taken-modifier-value">5%</dd>
+            </div>
+            <div class="breakdown-list__row" id="damage-before-split-row">
+              <dt>Damage before MoM/Progenesis</dt>
+              <dd id="mitigated-hit-value">723.6</dd>
+            </div>
+            <div class="breakdown-list__row" id="mana-loss-row">
+              <dt>Damage taken by mana</dt>
+              <dd id="mana-loss-value">0</dd>
+            </div>
+            <div class="breakdown-list__row" id="delayed-loss-row">
+              <dt>Delayed life loss</dt>
+              <dd id="delayed-loss-value">0</dd>
+            </div>
+            <div class="breakdown-list__row" id="life-after-hit-row">
+              <dt>Life after hit</dt>
+              <dd id="life-after-hit-value">2,776.4</dd>
+            </div>
+          </dl>
+        </section>
       </section>
     </main>
   </div>
