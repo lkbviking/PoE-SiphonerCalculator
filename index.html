@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A Path of Exile build checker shell for GitHub Pages.">
+  <title>PoE Build Checker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="hero__eyebrow">Path of Exile Build Check</p>
+      <h1>PoE Build Requirement Checker</h1>
+      <p class="hero__subtitle">A dark-mode shell for testing whether a build meets a target requirement.</p>
+    </header>
+
+    <main class="dashboard" aria-label="Build calculator layout">
+      <section class="panel panel--inputs" aria-labelledby="build-inputs-title">
+        <div class="panel__header">
+          <p class="panel__kicker">Inputs</p>
+          <h2 id="build-inputs-title">Build Parameters</h2>
+        </div>
+
+        <form id="build-form" class="input-grid">
+          <label class="field">
+            <span class="field__label">Primary value</span>
+            <input id="primary-value" name="primary-value" type="number" value="85" min="0" max="200">
+          </label>
+
+          <label class="field">
+            <span class="field__label">Support value</span>
+            <input id="support-value" name="support-value" type="number" value="25" min="0" max="200">
+          </label>
+
+          <label class="field">
+            <span class="field__label">Required threshold</span>
+            <input id="required-threshold" name="required-threshold" type="number" value="100" min="1" max="400">
+          </label>
+
+          <label class="field field--toggle" for="safety-check">
+            <span>
+              <span class="field__label">Enable safety check</span>
+              <span class="field__hint">Placeholder rule for the first hosted version</span>
+            </span>
+            <input id="safety-check" name="safety-check" type="checkbox" checked>
+          </label>
+        </form>
+      </section>
+
+      <section class="panel panel--result" aria-labelledby="result-title">
+        <div class="panel__header">
+          <p class="panel__kicker">Result</p>
+          <h2 id="result-title">Requirement Status</h2>
+        </div>
+
+        <div id="status-card" class="status-card status-card--pass" role="status" aria-live="polite">
+          <div class="status-card__pill">Build Works</div>
+          <div class="status-card__score-row">
+            <span class="status-card__score-label">Current score</span>
+            <span id="score-value" class="status-card__score-value">110</span>
+          </div>
+          <p id="status-message" class="status-card__message">Your placeholder build score clears the current threshold.</p>
+        </div>
+
+        <div class="summary-grid" aria-label="Computed preview values">
+          <article class="summary-tile">
+            <span class="summary-tile__label">Threshold</span>
+            <strong id="threshold-value">100</strong>
+          </article>
+          <article class="summary-tile">
+            <span class="summary-tile__label">Buffer</span>
+            <strong id="buffer-value">+10</strong>
+          </article>
+          <article class="summary-tile">
+            <span class="summary-tile__label">Safety mode</span>
+            <strong id="safety-value">On</strong>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
